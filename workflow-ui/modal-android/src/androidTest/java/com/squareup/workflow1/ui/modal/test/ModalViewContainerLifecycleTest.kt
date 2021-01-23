@@ -2,18 +2,16 @@ package com.squareup.workflow1.ui.modal.test
 
 import androidx.lifecycle.Lifecycle.State.CREATED
 import androidx.lifecycle.Lifecycle.State.RESUMED
-import androidx.lifecycle.LifecycleOwner
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.google.common.truth.Truth.assertThat
-import com.squareup.workflow1.ui.modal.ModalViewContainer
+import com.squareup.workflow1.ui.WorkflowUiExperimentalApi
+import com.squareup.workflow1.ui.internal.test.StateRegistryTestHelper
 import com.squareup.workflow1.ui.modal.test.ModalViewContainerLifecycleActivity.TestRendering.LeafRendering
 import com.squareup.workflow1.ui.modal.test.ModalViewContainerLifecycleActivity.TestRendering.RecurseRendering
 import org.junit.Rule
 import org.junit.Test
 
-/**
- * Tests for [ModalViewContainer]'s [LifecycleOwner] integration.
- */
+@OptIn(WorkflowUiExperimentalApi::class)
 internal class ModalViewContainerLifecycleTest {
 
   @Rule @JvmField internal val scenarioRule =
@@ -383,6 +381,26 @@ internal class ModalViewContainerLifecycleTest {
         "LeafView 2 recreated ON_START",
         "LeafView 2 recreated ON_RESUME",
       )
+    }
+  }
+
+  @Test fun modal_state_registry_restored_after_recreation() {
+    val modal = LeafRendering("modal")
+    val helper = StateRegistryTestHelper()
+
+    scenario.onActivity {
+      helper.initialize(it)
+      it.update(modal)
+    }
+
+    scenario.onActivity {
+      helper.statesToSaveByName[modal.name] = "saved"
+      it.recreateViewsOnNextRendering()
+    }
+
+    scenario.onActivity {
+      it.update(modal)
+      assertThat(helper.restoredStatesByName).containsEntry(modal.name, "saved")
     }
   }
 }

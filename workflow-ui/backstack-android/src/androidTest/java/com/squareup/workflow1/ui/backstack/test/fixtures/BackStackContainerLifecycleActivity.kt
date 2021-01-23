@@ -44,61 +44,58 @@ internal class BackStackContainerLifecycleActivity : AbstractLifecycleTestActivi
   }
 
   sealed class TestRendering {
-    data class LeafRendering(val name: String) : TestRendering(), Compatible {
-      override val compatibilityKey: String get() = name
-    }
-
+    data class LeafRendering(override val compatibilityKey: String) : TestRendering(), Compatible
     data class RecurseRendering(val wrappedBackstack: List<TestRendering>) : TestRendering()
   }
 
   private val viewObserver =
-    object : ViewObserver<LeafRendering> by lifecycleLoggingViewObserver({ it.name }) {
+    object : ViewObserver<LeafRendering> by lifecycleLoggingViewObserver() {
       override fun onViewCreated(
         view: View,
         rendering: LeafRendering
       ) {
-        view.tag = rendering.name
+        view.tag = rendering.compatibilityKey
 
         // Need to set the view to enable view persistence.
-        view.id = rendering.name.hashCode()
+        view.id = rendering.compatibilityKey.hashCode()
 
-        logEvent("${rendering.name} onViewCreated viewState=${view.viewState}")
+        logEvent("${rendering.compatibilityKey} onViewCreated viewState=${view.viewState}")
       }
 
       override fun onShowRendering(
         view: View,
         rendering: LeafRendering
       ) {
-        check(view.tag == rendering.name)
-        logEvent("${rendering.name} onShowRendering viewState=${view.viewState}")
+        check(view.tag == rendering.compatibilityKey)
+        logEvent("${rendering.compatibilityKey} onShowRendering viewState=${view.viewState}")
       }
 
       override fun onAttachedToWindow(
         view: View,
         rendering: LeafRendering
       ) {
-        logEvent("${rendering.name} onAttach viewState=${view.viewState}")
+        logEvent("${rendering.compatibilityKey} onAttach viewState=${view.viewState}")
       }
 
       override fun onDetachedFromWindow(
         view: View,
         rendering: LeafRendering
       ) {
-        logEvent("${rendering.name} onDetach viewState=${view.viewState}")
+        logEvent("${rendering.compatibilityKey} onDetach viewState=${view.viewState}")
       }
 
       override fun onSaveInstanceState(
         view: View,
         rendering: LeafRendering
       ) {
-        logEvent("${rendering.name} onSave viewState=${view.viewState}")
+        logEvent("${rendering.compatibilityKey} onSave viewState=${view.viewState}")
       }
 
       override fun onRestoreInstanceState(
         view: View,
         rendering: LeafRendering
       ) {
-        logEvent("${rendering.name} onRestore viewState=${view.viewState}")
+        logEvent("${rendering.compatibilityKey} onRestore viewState=${view.viewState}")
       }
 
       private val View.viewState get() = (this as ViewStateTestView).viewState
@@ -134,7 +131,6 @@ internal class BackStackContainerLifecycleActivity : AbstractLifecycleTestActivi
 
   fun update(vararg backstack: TestRendering) =
     setRendering(backstack.asList().toBackstackWithBase())
-
   private fun List<TestRendering>.toBackstackWithBase() =
     BackStackScreen(BaseRendering, this)
 }

@@ -24,7 +24,6 @@ dependencies {
   implementation(project(":workflow-runtime"))
   implementation(Dependencies.AndroidX.appcompat)
   implementation(Dependencies.AndroidX.activity)
-  implementation(Dependencies.AndroidX.fragment)
   implementation(Dependencies.AndroidX.savedstate)
   implementation(Dependencies.Kotlin.Coroutines.android)
   implementation(Dependencies.Kotlin.Coroutines.core)

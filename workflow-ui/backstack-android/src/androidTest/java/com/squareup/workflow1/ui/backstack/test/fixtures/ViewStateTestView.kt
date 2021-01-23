@@ -4,9 +4,12 @@ import android.content.Context
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
+import android.view.View
+import androidx.savedstate.ViewTreeSavedStateRegistryOwner
 import com.squareup.workflow1.ui.WorkflowUiExperimentalApi
 import com.squareup.workflow1.ui.backstack.test.fixtures.BackStackContainerLifecycleActivity.TestRendering.LeafRendering
 import com.squareup.workflow1.ui.internal.test.AbstractLifecycleTestActivity.LeafView
+import kotlin.test.fail
 
 /**
  * Simple view that has a string [viewState] property that will be saved and restored by the
@@ -15,6 +18,7 @@ import com.squareup.workflow1.ui.internal.test.AbstractLifecycleTestActivity.Lea
 @OptIn(WorkflowUiExperimentalApi::class)
 internal class ViewStateTestView(context: Context) : LeafView<LeafRendering>(context) {
 
+  /** View state that is saved via [onSaveInstanceState]. */
   var viewState: String = ""
 
   override fun onSaveInstanceState(): Parcelable {

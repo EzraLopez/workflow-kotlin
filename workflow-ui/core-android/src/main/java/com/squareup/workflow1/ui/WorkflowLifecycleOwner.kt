@@ -70,8 +70,8 @@ public interface WorkflowLifecycleOwner : LifecycleOwner {
     public fun installOn(
       view: View,
       findParentLifecycle: () -> Lifecycle? = { findViewTreeLifecycle(view) }
-    ) {
-      RealWorkflowLifecycleOwner(view, findParentLifecycle).also {
+    ): WorkflowLifecycleOwner {
+      return RealWorkflowLifecycleOwner(view, findParentLifecycle).also {
         ViewTreeLifecycleOwner.set(view, it)
         view.addOnAttachStateChangeListener(it)
       }
@@ -139,6 +139,8 @@ internal class RealWorkflowLifecycleOwner(
       "Expected to find either a ViewTreeLifecycleOwner in the view tree, or for the view's" +
         " context to be a LifecycleOwner."
     }
+
+    println("OMG WLO attached to window for ${v.hashCode()}: ${v.getRendering<Any>()}")
 
     if (parentLifecycle !== oldLifecycle) {
       oldLifecycle?.removeObserver(this)

@@ -156,6 +156,97 @@ internal class ComposeViewTreeIntegrationTest {
     }
   }
 
+  // region merging
+
+  @Test fun composition_state_is_restored_on_pop() {
+    var state: MutableState<String>? = null
+    val firstScreen =
+      ComposeRendering("first") {
+        val innerState = savedInstanceState { "hello world" }
+        DisposableEffect(Unit) {
+          state = innerState
+          onDispose { state = null }
+        }
+      }
+    val secondScreen =
+      ComposeRendering("second") {}
+
+    // Show first screen to initialize state.
+    scenario.onActivity {
+      it.setBackstack(firstScreen)
+    }
+    composeRule.runOnIdle {
+      assertThat(state!!.value).isEqualTo("hello world")
+    }
+    state!!.value = "saved"
+
+    // Navigate away.
+    scenario.onActivity {
+      it.setBackstack(firstScreen, secondScreen)
+    }
+    composeRule.runOnIdle {
+      assertThat(state).isNull()
+    }
+
+    // Navigate back to restore state.
+    scenario.onActivity {
+      it.setBackstack(firstScreen)
+    }
+
+    composeRule.runOnIdle {
+      assertThat(state!!.value).isEqualTo("saved")
+    }
+  }
+
+  @Test fun composition_state_is_restored_on_pop_after_config_change() {
+    var state: MutableState<String>? = null
+    val firstScreen =
+      ComposeRendering("first") {
+        val innerState = savedInstanceState { "hello world" }
+        DisposableEffect(Unit) {
+          state = innerState
+          onDispose { state = null }
+        }
+      }
+    val secondScreen =
+      ComposeRendering("second") {}
+
+    // Show first screen to initialize state.
+    scenario.onActivity {
+      it.setBackstack(firstScreen)
+    }
+    composeRule.runOnIdle {
+      assertThat(state!!.value).isEqualTo("hello world")
+    }
+    state!!.value = "saved"
+
+    // Navigate away.
+    scenario.onActivity {
+      it.setBackstack(firstScreen, secondScreen)
+    }
+    composeRule.runOnIdle {
+      assertThat(state).isNull()
+    }
+
+    // Simulate config change.
+    scenario.recreate()
+
+    // Navigate back to restore state.
+    scenario.onActivity {
+      it.setBackstack(firstScreen)
+    }
+
+    composeRule.runOnIdle {
+      assertThat(state!!.value).isEqualTo("saved")
+    }
+  }
+
+  @Test fun composition_state_is_restored_in_modal() {
+    TODO()
+  }
+
+  // endregion
+
   private fun WorkflowUiTestActivity.setBackstack(vararg backstack: ComposeRendering) {
     setRendering(BackStackScreen(EmptyRendering, backstack.asList()))
   }

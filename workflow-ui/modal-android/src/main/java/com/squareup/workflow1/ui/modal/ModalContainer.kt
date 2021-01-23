@@ -15,6 +15,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Lifecycle.Event.ON_DESTROY
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
+import androidx.savedstate.SavedStateRegistry
+import androidx.savedstate.SavedStateRegistryOwner
+import androidx.savedstate.ViewTreeSavedStateRegistryOwner
 import com.squareup.workflow1.ui.Named
 import com.squareup.workflow1.ui.ViewEnvironment
 import com.squareup.workflow1.ui.WorkflowLifecycleOwner
@@ -22,6 +25,7 @@ import com.squareup.workflow1.ui.WorkflowUiExperimentalApi
 import com.squareup.workflow1.ui.WorkflowViewStub
 import com.squareup.workflow1.ui.compatible
 import com.squareup.workflow1.ui.lifecycleOrNull
+import com.squareup.workflow1.ui.savedStateRegistryOrNull
 import kotlin.LazyThreadSafetyMode.NONE
 
 /**
@@ -64,10 +68,25 @@ public abstract class ModalContainer<ModalRenderingT : Any> @JvmOverloads constr
             // set it here. When the views are attached, this will become the parent lifecycle of
             // the one from buildDialog if any, and so we can use our lifecycle to destroy-on-detach
             // the dialog hierarchy.
-            WorkflowLifecycleOwner.installOn(
+            val dialogLifecycle = WorkflowLifecycleOwner.installOn(
               dialogView,
               findParentLifecycle = { parentLifecycleOwner?.lifecycle }
             )
+
+            // Forward this container's SavedStateRegistryOwner to the dialog's view tree.
+            ViewTreeSavedStateRegistryOwner.set(dialogView, object : SavedStateRegistryOwner {
+              private val parentSavedStateRegistry by lazy {
+                ViewTreeSavedStateRegistryOwner.get(this@ModalContainer)?.savedStateRegistry
+                  ?: context?.savedStateRegistryOrNull()
+                  ?: error(
+                    "Expected to find either a ViewTreeSavedStateRegistryOwner in the view tree," +
+                      " or for the view's context to be a SavedStateRegistryOwner."
+                  )
+              }
+
+              override fun getLifecycle(): Lifecycle = dialogLifecycle.lifecycle
+              override fun getSavedStateRegistry(): SavedStateRegistry = parentSavedStateRegistry
+            })
 
             dialogView.addOnAttachStateChangeListener(
               object : OnAttachStateChangeListener {
